@@ -235,6 +235,7 @@ public class PantallaJuego implements Screen {
 
         }
 
+
 	    	 
     public boolean agregarBala(Bullet bb) {
     	return balas.add(bb);
