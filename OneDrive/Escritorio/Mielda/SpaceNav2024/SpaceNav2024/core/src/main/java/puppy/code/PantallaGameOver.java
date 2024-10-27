@@ -192,7 +192,7 @@ public class PantallaGameOver implements Screen {
         buttonFont.dispose();
     }
 }
-//
+
 /*
 package puppy.code;
 
