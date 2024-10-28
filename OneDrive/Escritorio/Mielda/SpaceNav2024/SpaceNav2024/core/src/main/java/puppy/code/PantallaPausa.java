@@ -75,24 +75,74 @@ public class PantallaPausa implements Screen {
     }
 
     private void drawButtons() {
-        if (reanudarHover) batch.setColor(1, 1, 1, 0.8f);
-        else batch.setColor(0.6f, 0.6f, 0.6f, 1);
-        batch.draw(background, btnReanudarBounds.x, btnReanudarBounds.y, btnReanudarBounds.width, btnReanudarBounds.height);
-        
-        if (salirHover) batch.setColor(1, 1, 1, 0.8f);
-        else batch.setColor(0.6f, 0.6f, 0.6f, 1);
-        batch.draw(background, btnSalirBounds.x, btnSalirBounds.y, btnSalirBounds.width, btnSalirBounds.height);
-        
-        batch.setColor(Color.WHITE);
+        // Color de hover blanco brillante
+        Color hoverColor = Color.valueOf("#F0F0F0");
 
+        // Botón "REANUDAR" con hover y borde
+        if (reanudarHover) {
+            batch.setColor(hoverColor);
+            // Dibujar borde alrededor del botón "REANUDAR"
+            batch.draw(background, btnReanudarBounds.x - 6, btnReanudarBounds.y - 6, btnReanudarBounds.width + 12, btnReanudarBounds.height + 12);
+        }
+        batch.setColor(reanudarHover ? Color.LIGHT_GRAY : Color.DARK_GRAY);
+        batch.draw(background, btnReanudarBounds.x, btnReanudarBounds.y, btnReanudarBounds.width, btnReanudarBounds.height);
+
+        // Botón "SALIR" con hover y borde
+        if (salirHover) {
+            batch.setColor(hoverColor);
+            // Dibujar borde alrededor del botón "SALIR"
+            batch.draw(background, btnSalirBounds.x - 6, btnSalirBounds.y - 6, btnSalirBounds.width + 12, btnSalirBounds.height + 12);
+        }
+        batch.setColor(salirHover ? Color.LIGHT_GRAY : Color.DARK_GRAY);
+        batch.draw(background, btnSalirBounds.x, btnSalirBounds.y, btnSalirBounds.width, btnSalirBounds.height);
+
+        batch.setColor(Color.WHITE); // Restaurar color a blanco para el texto
+
+        // Texto del botón "REANUDAR"
         layout.setText(buttonFont, "REANUDAR");
-        buttonFont.draw(batch, "REANUDAR", btnReanudarBounds.x + (btnReanudarBounds.width - layout.width) / 2, btnReanudarBounds.y + (btnReanudarBounds.height + layout.height) / 2);
-        
+        buttonFont.draw(batch, "REANUDAR", btnReanudarBounds.x + (btnReanudarBounds.width - layout.width) / 2, 
+                        btnReanudarBounds.y + (btnReanudarBounds.height + layout.height) / 2);
+
+        // Texto del botón "SALIR"
         layout.setText(buttonFont, "SALIR");
-        buttonFont.draw(batch, "SALIR", btnSalirBounds.x + (btnSalirBounds.width - layout.width) / 2, btnSalirBounds.y + (btnSalirBounds.height + layout.height) / 2);
+        buttonFont.draw(batch, "SALIR", btnSalirBounds.x + (btnSalirBounds.width - layout.width) / 2, 
+                        btnSalirBounds.y + (btnSalirBounds.height + layout.height) / 2);
     }
 
+    
     private void handleButtonInteractions() {
+        int mouseX = Gdx.input.getX() * 1200 / Gdx.graphics.getWidth();
+        int mouseY = (Gdx.graphics.getHeight() - Gdx.input.getY()) * 800 / Gdx.graphics.getHeight();
+
+        // Manejar el botón "Reanudar"
+        if (btnReanudarBounds.contains(mouseX, mouseY)) {
+            if (!reanudarHover) hoverSound.play();
+            reanudarHover = true;
+
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) || Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+                clickSound.play();
+                pantallaJuego.reanudarMusica();  // Reanudar la música antes de volver a la pantalla de juego
+                game.setScreen(pantallaJuego);
+            }
+        } else {
+            reanudarHover = false;
+        }
+
+        // Manejar el botón "Salir"
+        if (btnSalirBounds.contains(mouseX, mouseY)) {
+            if (!salirHover) hoverSound.play();
+            salirHover = true;
+
+            if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                clickSound.play();
+                Gdx.app.exit();
+            }
+        } else {
+            salirHover = false;
+        }
+    }
+
+    /*private void handleButtonInteractions() {
         int mouseX = Gdx.input.getX() * 1200 / Gdx.graphics.getWidth();
         int mouseY = (Gdx.graphics.getHeight() - Gdx.input.getY()) * 800 / Gdx.graphics.getHeight();
 
@@ -117,7 +167,7 @@ public class PantallaPausa implements Screen {
         } else {
             salirHover = false;
         }
-    }
+    }*/
 
     @Override
     public void show() {}

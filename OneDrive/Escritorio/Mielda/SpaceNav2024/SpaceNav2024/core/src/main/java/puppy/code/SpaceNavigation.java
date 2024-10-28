@@ -4,8 +4,10 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.ApplicationAdapter;
 
 public class SpaceNavigation extends Game {
+    private boolean isInBackground = false;
     private String nombreJuego = "Space Navigation";
     private SpriteBatch batch;
     private BitmapFont font;
@@ -64,4 +66,30 @@ public class SpaceNavigation extends Game {
         pantallaJuego = new PantallaJuego(this, ronda, vidas, score, velXAsteroides, velYAsteroides, cantAsteroides);
         setScreen(pantallaJuego);
     }
-}
+    @Override
+    public void pause() {
+        System.out.println("App paused (going to background)");
+        isInBackground = true;
+
+        if (getScreen() instanceof PantallaJuego) {
+            PantallaJuego pantallaJuego = (PantallaJuego) getScreen();
+            if (pantallaJuego.getGameMusic() != null) {
+                pantallaJuego.getGameMusic().pause();
+            }
+        }
+    }
+
+    @Override
+    public void resume() {
+            System.out.println("App resumed (back to foreground)");
+            isInBackground = false;
+
+            if (getScreen() instanceof PantallaJuego) {
+                PantallaJuego pantallaJuego = (PantallaJuego) getScreen();
+                if (pantallaJuego.getGameMusic() != null) {
+                    pantallaJuego.getGameMusic().play();
+                }
+            }
+        }
+    }
+    

@@ -14,6 +14,9 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.ScreenUtils;
 
 public class PantallaGameOver implements Screen {
+    
+    private final int score;
+    private final int highScore;
 
     private final SpaceNavigation game;
     private final OrthographicCamera camera;
@@ -39,8 +42,10 @@ public class PantallaGameOver implements Screen {
     
     private final GlyphLayout layout;
 
-    public PantallaGameOver(SpaceNavigation game) {
+    public PantallaGameOver(SpaceNavigation game, int score, int highScore) {
         this.game = game;
+        this.score = score;       // Guardar el puntaje actual
+        this.highScore = highScore; // Guardar el puntaje más alto
         
         camera = new OrthographicCamera();
         camera.setToOrtho(false, 1200, 800);
@@ -77,50 +82,65 @@ public class PantallaGameOver implements Screen {
     }
 
     @Override
-    public void render(float delta) {
+        public void render(float delta) {
         ScreenUtils.clear(0, 0, 0.2f, 1);
 
         camera.update();
         batch.setProjectionMatrix(camera.combined);
 
         batch.begin();
-        
+
         // Dibujar fondo con color oscuro
         batch.setColor(0.2f, 0.2f, 0.2f, 1f); // Fondo más oscuro
         batch.draw(background, 0, 0, 1200, 800);
         batch.setColor(Color.WHITE); // Restaurar color
-        
-        // Dibujar título "Game Over"
+
+        // Dibujar título "Game Over" en la parte superior
         layout.setText(buttonFont, "Game Over !!!");
-        buttonFont.draw(batch, layout, (1200 - layout.width) / 2, 600);
+        buttonFont.draw(batch, layout, (1200 - layout.width) / 2, 700);
+
+        // Puntaje obtenido
+        layout.setText(buttonFont, "Puntaje: " + score);
+        buttonFont.draw(batch, layout, (1200 - layout.width) / 2, 550); // Ajustado a 540 para mayor espacio
+
+        // Puntaje más alto
+        layout.setText(buttonFont, "Puntaje más alto: " + highScore);
+        buttonFont.draw(batch, layout, (1200 - layout.width) / 2, 600); // Ajustado a 490 para mayor espacio
 
         // Dibujar los botones
         drawButtons();
-        
+
         batch.end();
 
         // Manejar interacciones de botones
         handleButtonInteractions();
     }
 
+
     private void drawButtons() {
-        // Dibujar el botón "Volver a jugar" con hover
+        // Color de hover blanco brillante para el borde
+        Color hoverBorderColor = Color.valueOf("#F0F0F0");
+
+        // Dibujar el botón "Volver a jugar" con borde y hover
         if (volverHover) {
-            batch.setColor(1, 1, 1, 0.8f); // Color claro en hover
-        } else {
-            batch.setColor(0.6f, 0.6f, 0.6f, 1); // Color gris normal
+            batch.setColor(hoverBorderColor);
+            // Dibujar borde alrededor del botón "Volver a jugar"
+            batch.draw(background, btnVolverBounds.x - 6, btnVolverBounds.y - 6, btnVolverBounds.width + 12, btnVolverBounds.height + 12);
         }
+        batch.setColor(volverHover ? Color.LIGHT_GRAY : Color.DARK_GRAY);
         batch.draw(background, btnVolverBounds.x, btnVolverBounds.y, btnVolverBounds.width, btnVolverBounds.height);
 
-        // Dibujar el botón "Salir del juego" con hover
+        // Dibujar el botón "Salir del juego" con borde y hover
         if (salirHover) {
-            batch.setColor(1, 1, 1, 0.8f); // Color claro en hover
-        } else {
-            batch.setColor(0.6f, 0.6f, 0.6f, 1); // Color gris normal
+            batch.setColor(hoverBorderColor);
+            // Dibujar borde alrededor del botón "Salir del juego"
+            batch.draw(background, btnSalirBounds.x - 6, btnSalirBounds.y - 6, btnSalirBounds.width + 12, btnSalirBounds.height + 12);
         }
+        batch.setColor(salirHover ? Color.LIGHT_GRAY : Color.DARK_GRAY);
         batch.draw(background, btnSalirBounds.x, btnSalirBounds.y, btnSalirBounds.width, btnSalirBounds.height);
 
-        batch.setColor(Color.WHITE); // Restaurar el color a blanco
+        // Restaurar el color a blanco para el texto
+        batch.setColor(Color.WHITE);
 
         // Centralizar y dibujar el texto "VOLVER A JUGAR"
         layout.setText(buttonFont, "VOLVER A JUGAR");
@@ -134,6 +154,7 @@ public class PantallaGameOver implements Screen {
         float salirTextY = btnSalirBounds.y + (btnSalirBounds.height + layout.height) / 2;
         buttonFont.draw(batch, "SALIR DEL JUEGO", salirTextX, salirTextY);
     }
+
 
     private void handleButtonInteractions() {
         int mouseX = Gdx.input.getX() * 1200 / Gdx.graphics.getWidth();

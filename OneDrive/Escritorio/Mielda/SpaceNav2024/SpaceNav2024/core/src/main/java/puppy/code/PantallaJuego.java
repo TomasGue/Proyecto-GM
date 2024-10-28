@@ -24,6 +24,7 @@ public class PantallaJuego implements Screen {
     private OrthographicCamera camera;
     private SpriteBatch batch;
     private Sound explosionSound1, explosionSound2;
+    private Sound nuevaRondaSound; // Sonido para nueva ronda
     private Music gameMusic, deathSound;
     private int score;
     private int ronda;
@@ -52,11 +53,13 @@ public class PantallaJuego implements Screen {
     public PantallaJuego(SpaceNavigation game, int ronda, int vidas, int score,
                          int velXAsteroides, int velYAsteroides, int cantAsteroides) {
         this.game = game;
-        this.ronda = ronda;
-        this.score = score;
-        this.velXAsteroides = velXAsteroides;
-        this.velYAsteroides = velYAsteroides;
-        this.cantAsteroides = cantAsteroides;
+
+        // Asignar valores iniciales basados en el estado de la partida
+        this.ronda = (ronda == 1) ? 1 : ronda;
+        this.score = (ronda == 1) ? 0 : score;
+        this.velXAsteroides = (ronda == 1) ? 1 : velXAsteroides;
+        this.velYAsteroides = (ronda == 1) ? 1 : velYAsteroides;
+        this.cantAsteroides = (ronda == 1) ? 3 : cantAsteroides;
 
         batch = game.getBatch();
         camera = new OrthographicCamera();
@@ -66,6 +69,7 @@ public class PantallaJuego implements Screen {
         explosionSound2 = Gdx.audio.newSound(Gdx.files.internal("explosion2.wav"));
         gameMusic = Gdx.audio.newMusic(Gdx.files.internal("SonidoPantallaJuego.mp3"));
         deathSound = Gdx.audio.newMusic(Gdx.files.internal("SonidoMuerteFinal.mp3"));
+        nuevaRondaSound = Gdx.audio.newSound(Gdx.files.internal("nuevaRonda.mp3")); // Cargar sonido de nueva ronda
         gameMusic.setLooping(true);
         gameMusic.setVolume(0.5f);
         gameMusic.play();
@@ -86,6 +90,11 @@ public class PantallaJuego implements Screen {
 
         // Generar asteroides al iniciar el juego
         generarAsteroides();
+
+        // Reproducir sonido de nueva ronda solo si se trata de una nueva partida
+        if (ronda == 1) {
+            nuevaRondaSound.play();
+        }
     }
 
     private void generarAsteroides() {
@@ -130,12 +139,18 @@ public class PantallaJuego implements Screen {
 
         // Botón de pausa en la esquina superior izquierda
         batch.draw(pauseButtonTexture, btnPausa.x, btnPausa.y, btnPausa.width, btnPausa.height);
-
-        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) &&
+        // Dentro del método render de PantallaJuego, en la parte donde se activa el menú de pausa:
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || 
+            (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && btnPausa.contains(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY()))) {
+            paused = true;
+            gameMusic.pause();  // Pausar la música al activar el menú de pausa
+            game.setScreen(new PantallaPausa(game, this));
+        }
+        /*if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) &&
                 btnPausa.contains(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY()))) {
             paused = true;
             game.setScreen(new PantallaPausa(game, this));
-        }
+        }*/
 
         // Lógica de juego solo si no está en pausa o game over
         if (!paused && !gameOver) {
@@ -206,7 +221,7 @@ public class PantallaJuego implements Screen {
                 if (score > game.getHighScore()) {
                     game.setHighScore(score);
                 }
-                game.setScreen(new PantallaGameOver(game));
+                game.setScreen(new PantallaGameOver(game, score, game.getHighScore()));
                 dispose();
             }
         }, 3);
@@ -217,13 +232,37 @@ public class PantallaJuego implements Screen {
         int nuevaVelX = Math.min(15, velXAsteroides + 1);
         int nuevaVelY = Math.min(15, velYAsteroides + 1);
 
-        game.setScreen(new PantallaJuego(game, ronda + 1, nave.getVidas(), score, nuevaVelX, nuevaVelY, nuevosAsteroides));
+        // Configurar la nueva pantalla de juego con la siguiente ronda
+        PantallaJuego nuevaPantalla = new PantallaJuego(game, ronda + 1, nave.getVidas(), score, nuevaVelX, nuevaVelY, nuevosAsteroides);
+
+        game.setScreen(nuevaPantalla);
+
+        // Reproducir el sonido de nueva ronda después de que se cambie la pantalla
+        nuevaPantalla.reproducirSonidoNuevaRonda();
+
+        // Liberar recursos de la pantalla actual
         dispose();
     }
+        public void reproducirSonidoNuevaRonda() {
+        nuevaRondaSound.play();
+    }
 
+
+    
     public boolean agregarBala(Bullet bb) {
         return balas.add(bb);
     }
+    public void reanudarMusica() {
+        if (!gameMusic.isPlaying()) {
+            gameMusic.play();
+        }
+    }
+    public Music getGameMusic() {
+    return gameMusic;
+}
+
+
+
 
     @Override public void show() { 
         paused = false;
@@ -238,6 +277,7 @@ public class PantallaJuego implements Screen {
         explosionSound2.dispose();
         gameMusic.dispose();
         deathSound.dispose();
+        nuevaRondaSound.dispose(); // Liberar el recurso del sonido de nueva ronda
         backgroundTexture.dispose();
         starsTexture.dispose();
         pauseButtonTexture.dispose();
