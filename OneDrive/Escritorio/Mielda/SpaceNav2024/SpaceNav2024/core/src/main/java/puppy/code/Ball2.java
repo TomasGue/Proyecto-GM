@@ -72,28 +72,46 @@ public class Ball2 {
         return this.radius;
     }
 
-    public void checkCollision(Ball2 b2) {
+   public void checkCollision(Ball2 b2) {
         if (spr.getBoundingRectangle().overlaps(b2.spr.getBoundingRectangle())) {
-            // Rebotar en caso de colisión
-            if (xSpeed == 0) xSpeed += b2.xSpeed / 2;
-            if (b2.xSpeed == 0) b2.xSpeed += xSpeed / 2;
-            xSpeed *= -1;
-            b2.xSpeed *= -1;
+            // Calcular la distancia entre los centros de las esferas
+            int dx = this.x - b2.x;
+            int dy = this.y - b2.y;
+            double distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (ySpeed == 0) ySpeed += b2.ySpeed / 2;
-            if (b2.ySpeed == 0) b2.ySpeed += ySpeed / 2;
-            ySpeed *= -1;
-            b2.ySpeed *= -1;
+            // Verificar colisión y ajustar si es necesario
+            if (distance < this.radius + b2.radius && distance != 0) {
+                // Reposicionar ligeramente para evitar pegado
+                double overlap = 0.5 * (this.radius + b2.radius - distance) / distance;
+                this.x += (int) (overlap * dx);
+                this.y += (int) (overlap * dy);
+                b2.x -= (int) (overlap * dx);
+                b2.y -= (int) (overlap * dy);
 
-            // Separar las esferas para evitar que se queden pegadas
-            float overlap = 0.5f * (radius + b2.radius);
-            this.x += overlap * Math.signum(this.xSpeed);
-            this.y += overlap * Math.signum(this.ySpeed);
+                // Aplicar los cambios de posición a los sprites
+                this.spr.setPosition(this.x - radius, this.y - radius);
+                b2.spr.setPosition(b2.x - b2.radius, b2.y - b2.radius);
 
-            b2.x += overlap * Math.signum(b2.xSpeed);
-            b2.y += overlap * Math.signum(b2.ySpeed);
+                // Intercambiar velocidades sin cambiar magnitud
+                int tempXSpeed = this.xSpeed;
+                int tempYSpeed = this.ySpeed;
+                this.xSpeed = b2.xSpeed;
+                this.ySpeed = b2.ySpeed;
+                b2.xSpeed = tempXSpeed;
+                b2.ySpeed = tempYSpeed;
+
+                // Asegurar que ninguna velocidad sea 0 para mantener el movimiento
+                if (this.xSpeed == 0) this.xSpeed = (Math.random() > 0.5 ? 1 : -1);
+                if (this.ySpeed == 0) this.ySpeed = (Math.random() > 0.5 ? 1 : -1);
+                if (b2.xSpeed == 0) b2.xSpeed = (Math.random() > 0.5 ? 1 : -1);
+                if (b2.ySpeed == 0) b2.ySpeed = (Math.random() > 0.5 ? 1 : -1);
+            }
         }
     }
+
+
+
+
 
     // Getters para X y Y (¡nuevos!)
     public int getX() {
