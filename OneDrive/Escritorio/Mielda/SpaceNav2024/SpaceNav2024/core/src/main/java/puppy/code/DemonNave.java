@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.TimeUtils;
 import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.audio.Sound;
 
 public class DemonNave extends Monstruo implements Ataque {
     private Texture disparoTextura;
@@ -15,12 +16,16 @@ public class DemonNave extends Monstruo implements Ataque {
     private final int INTERVALO_DISPARO = 5000; // Intervalo de 5 segundos entre disparos
     private Array<Bullet> disparos = new Array<>(); // Almacena los disparos de la nave enemiga
     private Rectangle hitbox;
+    private Sound sonidoDaño;
+    private Sound sonidoMuerte;
 
-    public DemonNave(Texture textura, Texture disparoTextura, float x, float y, int vidas) {
+    public DemonNave(Texture textura, Texture disparoTextura, float x, float y, int vidas, Sound sonidoDaño, Sound sonidoMuerte) {
         super(textura, x, y, vidas);
         this.disparoTextura = disparoTextura;
         this.ultimoDisparo = TimeUtils.millis();
         this.hitbox = new Rectangle(x, y, textura.getWidth(), textura.getHeight()); // Inicializar el hitbox
+        this.sonidoDaño = sonidoDaño;
+        this.sonidoMuerte = sonidoMuerte;
     }
 
     @Override
@@ -86,8 +91,11 @@ public class DemonNave extends Monstruo implements Ataque {
 
     public void restarVida(int cantidad) {
         this.vidas -= cantidad;
-        if (this.vidas <= 0) {
-            morir();
+        if (this.vidas > 0) {
+            sonidoDaño.play(); // Reproduce el sonido de daño
+        } else if (this.vidas <= 0) {
+            sonidoMuerte.play(); // Reproduce el sonido de muerte
+            morir(); // Llama al método morir después de reproducir el sonido
         }
     }
 
@@ -103,5 +111,12 @@ public class DemonNave extends Monstruo implements Ataque {
 
     public Texture getDisparoTextura() {
         return disparoTextura;
+    }
+
+    // Método para liberar los recursos
+    public void dispose() {
+        disparoTextura.dispose();
+        if (sonidoDaño != null) sonidoDaño.dispose();
+        if (sonidoMuerte != null) sonidoMuerte.dispose();
     }
 }
