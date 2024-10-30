@@ -9,7 +9,6 @@ import com.badlogic.gdx.math.Rectangle;
 public class DemonOjo extends Monstruo implements Ataque {
     private Texture texturaIzquierda, texturaDerecha, texturaFrontal, texturaAtaque;
     private Sound sonidoDanio, sonidoMuerte;
-    private int contadorDanio = 0;
     private final int danioAtaque = 1;
     private float tiempoMovimiento = 0f;
     private boolean moviendoDerecha = true;
@@ -83,19 +82,13 @@ public class DemonOjo extends Monstruo implements Ataque {
 
     @Override
     public void recibirDanio(int danio) {
-        contadorDanio += danio;
-        if (contadorDanio < 3) {
-            sonidoDanio.play();
-        } else {
-            sonidoMuerte.play();
-            morir();
-        }
+        restarVida(danio);
     }
 
     @Override
     protected void morir() {
         System.out.println("DemonOjo ha muerto");
-        contadorDanio = 0; // Resetear el daño acumulado al morir
+        sonidoMuerte.play();
     }
 
     @Override
@@ -130,14 +123,11 @@ public class DemonOjo extends Monstruo implements Ataque {
     }
 
     public void restarVida(int valor) {
-        contadorDanio += valor;
-        if (contadorDanio >= 3) {
-            morir();
-        } else {
+        this.vidas -= valor;
+        if (this.vidas > 0) {
             sonidoDanio.play();
+        } else {
+            morir();
         }
     }
 }
-
-
-

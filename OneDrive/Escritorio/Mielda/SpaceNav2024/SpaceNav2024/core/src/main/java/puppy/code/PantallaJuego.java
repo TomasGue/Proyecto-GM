@@ -160,14 +160,16 @@ public class PantallaJuego implements Screen {
         layout.setText(fontPantallaJuego, "HighScore: " + game.getHighScore());
         fontPantallaJuego.draw(batch, layout, Gdx.graphics.getWidth() / 2 - 100, 30);
     }
-    
-   @Override
+    @Override
     public void render(float delta) {
+        // Limpiar la pantalla antes de dibujar
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-        batch.begin();
-        batch.draw(backgroundTexture, 0, 0, 1200, 800);
 
-        // Fondo de estrellas en movimiento
+        // Iniciar el batch
+        batch.begin();
+
+        // Dibujar el fondo y estrellas en movimiento
+        batch.draw(backgroundTexture, 0, 0, 1200, 800);
         starsX -= 50 * delta;
         batch.setColor(0.2f, 0.2f, 0.5f, 1f);
         batch.draw(starsTexture, starsX, 0, 1200, 800);
@@ -175,9 +177,10 @@ public class PantallaJuego implements Screen {
         if (starsX <= -1200) starsX = 0;
         batch.setColor(Color.WHITE);
 
+        // Dibujar encabezado de vidas, ronda y puntuación
         dibujaEncabezado();
 
-        // Control y renderizado para la ronda 3
+        // Control y renderizado para la ronda 3 (demonios y sus disparos)
         if (ronda == 3) {
             if (demonOjo != null) {
                 demonOjo.mover(delta);
@@ -219,13 +222,33 @@ public class PantallaJuego implements Screen {
                     }
                 }
             }
-        } else {
-            // Actualizar y dibujar asteroides y balas de la nave solo si no es la ronda 3
-            actualizarBalasYAsteroides(delta);
         }
 
-        // Botón de pausa en la esquina superior izquierda
+        // Actualizar y verificar colisiones de balas y asteroides
+        actualizarBalasYAsteroides(delta);
+
+        // Dibujar balas de la nave en todas las rondas
+        for (Bullet b : balas) {
+            b.draw(batch);
+        }
+
+        // Dibujar asteroides solo si no es la ronda 3
+        if (ronda != 3) {
+            for (Ball2 meteorito : balls1) {
+                meteorito.draw(batch);
+            }
+        }
+
+        // Dibujar la nave (asegúrate de que solo se llama una vez dentro de batch.begin())
+        nave.draw(batch, this);
+
+        // Dibujar botón de pausa
         batch.draw(pauseButtonTexture, btnPausa.x, btnPausa.y, btnPausa.width, btnPausa.height);
+
+        // Finalizar el batch
+        batch.end();
+
+        // Manejo de pausa
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || 
             (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && btnPausa.contains(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY()))) {
             paused = true;
@@ -238,7 +261,89 @@ public class PantallaJuego implements Screen {
             if (ronda != 3) {
                 actualizarBalasYAsteroides(delta);
             }
-            nave.draw(batch, this);
+        }
+
+        // Condición para iniciar nueva ronda
+        if (!gameOver && ((balls1.isEmpty() && ronda != 3) || (ronda == 3 && demonOjo == null && demonNave == null))) {
+            iniciarNuevaRonda();
+        }
+    }
+
+    
+    
+    
+    
+    
+    /*@Override
+    public void render(float delta) {
+        // Limpiar la pantalla antes de dibujar
+        Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+        // Iniciar el batch
+        batch.begin();
+
+        // Dibujar el fondo y estrellas en movimiento
+        batch.draw(backgroundTexture, 0, 0, 1200, 800);
+        starsX -= 50 * delta;
+        batch.setColor(0.2f, 0.2f, 0.5f, 1f);
+        batch.draw(starsTexture, starsX, 0, 1200, 800);
+        batch.draw(starsTexture, starsX + 1200, 0, 1200, 800);
+        if (starsX <= -1200) starsX = 0;
+        batch.setColor(Color.WHITE);
+
+        // Dibujar encabezado de vidas, ronda y puntuación
+        dibujaEncabezado();
+
+        // Control y renderizado para la ronda 3 (demonios y sus disparos)
+        if (ronda == 3) {
+            if (demonOjo != null) {
+                demonOjo.mover(delta);
+                demonOjo.render(batch);
+
+                // Ataque de DemonOjo cada 3 segundos
+                if (TimeUtils.timeSinceMillis(ultimoAtaqueDemonOjo) > 3000) {
+                    demonOjo.realizarAtaque(batch);
+                    ultimoAtaqueDemonOjo = TimeUtils.millis();
+                }
+
+                // Actualizar y dibujar los disparos de DemonOjo
+                for (int i = 0; i < demonOjo.getDisparos().size; i++) {
+                    Bullet disparo = demonOjo.getDisparos().get(i);
+                    disparo.update();
+                    if (disparo.isDestroyed() || disparo.getY() < 0) {
+                        demonOjo.getDisparos().removeIndex(i--); // Eliminar disparo si sale de la pantalla
+                    } else {
+                        disparo.draw(batch);
+                    }
+                }
+            }
+
+            if (demonNave != null) {
+                demonNave.mover(delta);
+                demonNave.render(batch);
+
+                // Ataque de DemonNave cada 5 segundos
+                demonNave.realizarAtaque(batch);
+
+                // Actualizar y dibujar los disparos de DemonNave
+                for (int i = 0; i < demonNave.getDisparos().size; i++) {
+                    Bullet disparo = demonNave.getDisparos().get(i);
+                    disparo.update();
+                    if (disparo.isDestroyed() || disparo.getY() < 0) {
+                        demonNave.getDisparos().removeIndex(i--); // Eliminar disparo si sale de la pantalla
+                    } else {
+                        disparo.draw(batch);
+                    }
+                }
+            }
+        }
+
+        // Actualizar y verificar colisiones de balas y asteroides
+        actualizarBalasYAsteroides(delta);
+
+        // Dibujar balas de la nave en todas las rondas
+        for (Bullet b : balas) {
+            b.draw(batch);
         }
 
         // Dibujar asteroides solo si no es la ronda 3
@@ -248,76 +353,87 @@ public class PantallaJuego implements Screen {
             }
         }
 
-        // Dibujar balas de la nave
-        for (Bullet b : balas) {
-            b.draw(batch);
+        // Dibujar la nave (asegúrate de que solo se llama una vez dentro de batch.begin())
+        nave.draw(batch, this);
+
+        // Dibujar botón de pausa
+        batch.draw(pauseButtonTexture, btnPausa.x, btnPausa.y, btnPausa.width, btnPausa.height);
+
+        // Finalizar el batch
+        batch.end();
+
+        // Manejo de pausa
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) || 
+            (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT) && btnPausa.contains(Gdx.input.getX(), Gdx.graphics.getHeight() - Gdx.input.getY()))) {
+            paused = true;
+            gameMusic.pause();
+            game.setScreen(new PantallaPausa(game, this));
         }
 
-        batch.end();
+        // Lógica de juego si no está en pausa o game over
+        if (!paused && !gameOver) {
+            if (ronda != 3) {
+                actualizarBalasYAsteroides(delta);
+            }
+        }
 
         // Condición para iniciar nueva ronda
         if (!gameOver && balls1.isEmpty() && ronda != 3) {
             iniciarNuevaRonda();
         }
-
-        // Mostrar posiciones de demonios si están inicializados
-        if (demonOjo != null) {
-            System.out.println("DemonOjo posición: x=" + demonOjo.getX() + ", y=" + demonOjo.getY());
-        }
-        if (demonNave != null) {
-            System.out.println("DemonNave posición: x=" + demonNave.getX() + ", y=" + demonNave.getY());
-        }
-    }
+    }*/
 
     private void actualizarBalasYAsteroides(float delta) {
         // Actualizar posición y verificar colisiones de cada bala
         for (int i = 0; i < balas.size(); i++) {
             Bullet b = balas.get(i);
-            b.update();  // Asegura que cada bala se actualice en todas las rondas
-            System.out.println("Bala actualizada en posición: " + b.getHitbox().getY());
+            b.update();
 
-            // Verificar colisión entre bala y meteorito solo si no es la ronda 3
             if (ronda != 3) {
+                // Colisión de balas con asteroides en rondas normales
                 for (int j = 0; j < balls1.size(); j++) {
                     Ball2 meteorito = balls1.get(j);
-                    if (b.getHitbox().overlaps(meteorito.getArea())) { // Usar overlaps para verificar colisión
-                        System.out.println("Bala impacta meteorito");
+                    if (b.getHitbox().overlaps(meteorito.getArea())) {
                         explosionSound1.play();
                         balls1.remove(meteorito);
                         score += 10;
-                        b.setDestroyed(true); // Marca la bala como destruida
+                        b.setDestroyed(true);
                         break;
                     }
                 }
             } else {
-                // En la ronda 3, verifica colisiones entre balas y demonios
+                // Colisión de balas con demonios en la ronda 3
                 if (demonOjo != null && b.getHitbox().overlaps(demonOjo.getHitbox())) {
-                    System.out.println("Bala impacta DemonOjo");
                     demonOjo.restarVida(1);
+                    if (demonOjo.getVidas() <= 0) {
+                        demonOjo.morir();
+                        demonOjo = null; // Eliminar demonOjo de la pantalla
+                    }
                     b.setDestroyed(true);
                 }
                 if (demonNave != null && b.getHitbox().overlaps(demonNave.getHitbox())) {
-                    System.out.println("Bala impacta DemonNave");
                     demonNave.restarVida(1);
+                    if (demonNave.getVidas() <= 0) {
+                        demonNave.morir();
+                        demonNave = null; // Eliminar demonNave de la pantalla
+                    }
                     b.setDestroyed(true);
                 }
             }
 
-            // Eliminar balas destruidas
             if (b.isDestroyed()) {
                 balas.remove(i--);
             }
         }
 
-        // Actualizar meteoritos solo si no es la ronda 3
+        // Movimiento y colisión de asteroides con la nave en rondas normales
         if (ronda != 3) {
-            for (Ball2 ball : balls1) {
-                ball.update();
-            }
             for (int i = 0; i < balls1.size(); i++) {
                 Ball2 meteorito = balls1.get(i);
-                if (nave.getHitbox().overlaps(meteorito.getArea())) {
-                    System.out.println("Meteorito impacta nave");
+                meteorito.update();  // Asegura que cada asteroide se mueva
+
+                if (!nave.estaHerido() && nave.getHitbox().overlaps(meteorito.getArea())) {
+                    explosionSound1.play();
                     balls1.remove(meteorito);
                     nave.restarVida(1);
                     if (nave.getVidas() <= 0) {
@@ -328,34 +444,47 @@ public class PantallaJuego implements Screen {
             }
         }
 
-        // Actualizar y manejar los disparos de DemonOjo y DemonNave en la ronda 3
+        // Actualizar y verificar colisiones de los disparos enemigos en ronda 3
         if (ronda == 3) {
-            for (int i = 0; i < demonOjo.getDisparos().size; i++) {
-                Bullet disparo = demonOjo.getDisparos().get(i);
-                disparo.update();
-                if (disparo.getHitbox().overlaps(nave.getHitbox())) {
-                    System.out.println("Disparo de DemonOjo impacta nave");
-                    nave.restarVida(demonOjo.getDanio());
-                    disparo.setDestroyed(true);
-                }
-                if (disparo.isDestroyed() || disparo.getY() < 0) {
-                    demonOjo.getDisparos().removeIndex(i--);
+            if (demonOjo != null) { // Verificación de que demonOjo no es null
+                for (int i = 0; i < demonOjo.getDisparos().size; i++) {
+                    Bullet disparo = demonOjo.getDisparos().get(i);
+                    disparo.update();
+                    if (disparo.getHitbox().overlaps(nave.getHitbox())) {
+                        nave.restarVida(demonOjo.getDanio());
+                        disparo.setDestroyed(true);
+                        if (nave.getVidas() <= 0) {
+                            handleGameOver();
+                        }
+                    }
+                    if (disparo.isDestroyed() || disparo.getY() < 0) {
+                        demonOjo.getDisparos().removeIndex(i--);
+                    }
                 }
             }
-            for (int i = 0; i < demonNave.getDisparos().size; i++) {
-                Bullet disparo = demonNave.getDisparos().get(i);
-                disparo.update();
-                if (disparo.getHitbox().overlaps(nave.getHitbox())) {
-                    System.out.println("Disparo de DemonNave impacta nave");
-                    nave.restarVida(demonNave.getDanio());
-                    disparo.setDestroyed(true);
-                }
-                if (disparo.isDestroyed() || disparo.getY() < 0) {
-                    demonNave.getDisparos().removeIndex(i--);
+
+            if (demonNave != null) { // Verificación de que demonNave no es null
+                for (int i = 0; i < demonNave.getDisparos().size; i++) {
+                    Bullet disparo = demonNave.getDisparos().get(i);
+                    disparo.update();
+                    if (disparo.getHitbox().overlaps(nave.getHitbox())) {
+                        nave.restarVida(demonNave.getDanio());
+                        disparo.setDestroyed(true);
+                        if (nave.getVidas() <= 0) {
+                            handleGameOver();
+                        }
+                    }
+                    if (disparo.isDestroyed() || disparo.getY() < 0) {
+                        demonNave.getDisparos().removeIndex(i--);
+                    }
                 }
             }
         }
     }
+
+
+
+
 
 
 
@@ -370,7 +499,7 @@ public class PantallaJuego implements Screen {
 
 
 
-    private void handleGameOver() {
+    /*private void handleGameOver() {
         gameOver = true;
         gameMusic.stop();
         deathSound.play();
@@ -384,7 +513,25 @@ public class PantallaJuego implements Screen {
                 dispose();
             }
         }, 3);
+    }*/
+    private void handleGameOver() {
+        if (!gameOver) {
+            gameOver = true;
+            gameMusic.stop();
+            deathSound.play();
+            Timer.schedule(new Task() {
+                @Override
+                public void run() {
+                    if (score > game.getHighScore()) {
+                        game.setHighScore(score);
+                    }
+                    game.setScreen(new PantallaGameOver(game, score, game.getHighScore()));
+                    dispose();
+                }
+            }, 3); // Esperar 3 segundos antes de ir a la pantalla de Game Over
+        }
     }
+
 
     private void iniciarNuevaRonda() {
         int nuevosAsteroides = Math.min(15, cantAsteroides + 2);
